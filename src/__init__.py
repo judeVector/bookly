@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from .books.routes import book_router
 from .auth.routes import auth_router
 
-from src.db.main import init_db, close_db
+from src.db.postgres import init_db, close_db
 
 
 @asynccontextmanager

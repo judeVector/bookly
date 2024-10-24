@@ -6,7 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from .service import BookService
 from .schemas import BookCreateModel, BookModel, BookUpdateModel
 
-from src.db.main import get_session
+from src.db.postgres import get_session
 from src.auth.dependencies import AccessTokenBearer
 
 
