@@ -15,13 +15,12 @@ book_service = BookService()
 access_token_bearer = AccessTokenBearer()
 
 
-@book_router.get("/", response_model=List[BookModel])
+@book_router.get("", response_model=List[BookModel])
 async def get_all_books(
     session: AsyncSession = Depends(get_session),
     security=Depends(access_token_bearer),
 ):
     books = await book_service.get_all_books(session)
-    print(security)
     return books
 
 
@@ -42,7 +41,7 @@ async def get_book(
     return book
 
 
-@book_router.post("/", status_code=status.HTTP_201_CREATED, response_model=BookModel)
+@book_router.post("", status_code=status.HTTP_201_CREATED, response_model=BookModel)
 async def create_a_book(
     book_data: BookCreateModel,
     session: AsyncSession = Depends(get_session),
