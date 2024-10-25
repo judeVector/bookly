@@ -1,9 +1,17 @@
+from fastapi import Depends
 from fastapi.security import HTTPBearer
 from fastapi import HTTPException, Request, status
+from sqlmodel.ext.asyncio.session import AsyncSession
+from typing import List
 
 from .utils import decode_token
+from .service import UserService
+from .models import User
 
 from src.db.redis import token_in_blocklist
+from src.db.postgres import get_session
+
+user_service = UserService()
 
 
 class TokenBearer(HTTPBearer):
@@ -47,15 +55,6 @@ class TokenBearer(HTTPBearer):
         token = credentials.credentials
         token_data = decode_token(token)
 
-        if token_data is None:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={
-                    "error": "Invalid token or token expired",
-                    "resolution": "Please get a new token",
-                },
-            )
-
         if await token_in_blocklist(token_data["jti"]):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -65,6 +64,14 @@ class TokenBearer(HTTPBearer):
                 },
             )
 
+        if token_data is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "error": "Invalid token or token expired",
+                    "resolution": "Please get a new token",
+                },
+            )
         # Perform token-specific validation
         self.verify_token_data(token_data)
         return token_data
@@ -127,3 +134,29 @@ class RefreshTokenBearer(TokenBearer):
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Please provide a valid refresh token.",
             )
+
+
+async def get_current_user(
+    token_details: dict = Depends(AccessTokenBearer()),
+    session: AsyncSession = Depends(get_session),
+):
+    user_email = token_details["user"]["email"]
+
+    user = await user_service.get_user_by_email(user_email, session)
+
+    return user
+
+
+class Rolechecker:
+    def __init__(self, allowed_roles: List[str]) -> None:
+        self.allowed_roles = allowed_roles
+
+    async def __call__(self, current_user: User = Depends(get_current_user)):
+
+        if current_user.role in self.allowed_roles:
+            return True
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not allowed to perform this action",
+        )
