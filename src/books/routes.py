@@ -7,15 +7,16 @@ from .service import BookService
 from .schemas import BookCreateModel, BookModel, BookUpdateModel
 
 from src.db.postgres import get_session
-from src.auth.dependencies import AccessTokenBearer
+from src.auth.dependencies import AccessTokenBearer, Rolechecker
 
 
 book_router = APIRouter()
 book_service = BookService()
 access_token_bearer = AccessTokenBearer()
+role_checker = Depends(Rolechecker(["admin"]))
 
 
-@book_router.get("", response_model=List[BookModel])
+@book_router.get("", response_model=List[BookModel], dependencies=[role_checker])
 async def get_all_books(
     session: AsyncSession = Depends(get_session),
     security=Depends(access_token_bearer),
@@ -24,7 +25,7 @@ async def get_all_books(
     return books
 
 
-@book_router.get("/{book_uid}", response_model=BookModel)
+@book_router.get("/{book_uid}", response_model=BookModel, dependencies=[role_checker])
 async def get_book(
     book_uid: UUID,
     session: AsyncSession = Depends(get_session),
@@ -41,7 +42,12 @@ async def get_book(
     return book
 
 
-@book_router.post("", status_code=status.HTTP_201_CREATED, response_model=BookModel)
+@book_router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=BookModel,
+    dependencies=[role_checker],
+)
 async def create_a_book(
     book_data: BookCreateModel,
     session: AsyncSession = Depends(get_session),
@@ -52,7 +58,9 @@ async def create_a_book(
     return new_book
 
 
-@book_router.patch("/{book_uid}", response_model=BookUpdateModel)
+@book_router.patch(
+    "/{book_uid}", response_model=BookUpdateModel, dependencies=[role_checker]
+)
 async def update_book(
     book_uid: UUID,
     book_update_data: BookUpdateModel,
@@ -70,7 +78,9 @@ async def update_book(
     return updated_book
 
 
-@book_router.delete("/{book_uid}", status_code=status.HTTP_204_NO_CONTENT)
+@book_router.delete(
+    "/{book_uid}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[role_checker]
+)
 async def delete_book(
     book_uid: UUID,
     session: AsyncSession = Depends(get_session),
