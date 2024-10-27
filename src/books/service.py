@@ -23,12 +23,16 @@ class BookService:
         except NoResultFound:
             return None
 
-    async def create_book(self, book_data: BookCreateModel, session: AsyncSession):
+    async def create_book(
+        self, book_data: BookCreateModel, user_uid: str, session: AsyncSession
+    ):
         book_data_dict = book_data.model_dump()
         new_book = Book(**book_data_dict)
         new_book.published_date = datetime.strptime(
             book_data_dict["published_date"], "%Y-%m-%d"
         )
+        new_book.user_id = user_uid
+
         session.add(new_book)
         await session.commit()
         await session.refresh(new_book)
@@ -57,3 +61,16 @@ class BookService:
             await session.commit()
             return True
         return None
+
+    async def get_user_books(self, user_uid: str, session: AsyncSession):
+        try:
+            statement = (
+                select(Book)
+                .where(Book.user_id == user_uid)
+                .order_by(desc(Book.created_at))
+            )
+            result = await session.exec(statement)
+            book = result.all()
+            return book
+        except NoResultFound:
+            return None
