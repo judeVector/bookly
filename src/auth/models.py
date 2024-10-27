@@ -1,9 +1,12 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column
-from sqlmodel import Field, SQLModel
+from sqlalchemy import Column, desc
+from typing import List
+from sqlmodel import Field, Relationship, SQLModel
 import sqlalchemy.dialects.postgresql as pg
+
+from src.books import models
 
 
 class User(SQLModel, table=True):
@@ -22,6 +25,10 @@ class User(SQLModel, table=True):
     is_verified: bool = Field(default=False)
     created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now))
     updated_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now))
+    books: List["models.Book"] = Relationship(
+        back_populates="user",
+        sa_relationship_kwargs={"lazy": "selectin", "order_by": desc("created_at")},
+    )
 
     def __repr__(self):
         return f"<User {self.username}>"
