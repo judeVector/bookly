@@ -21,6 +21,7 @@
 ## Tech Stack
 
 - **Backend**: FastAPI (Python)
+- **JWT**: The JWT token used to authenticate requests
 - **Database**: Postgresql (or any preferred database supported by SQLAlchemy)
 - **Authentication**: JWT-based authentication using OAuth2
 
