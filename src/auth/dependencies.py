@@ -6,7 +6,7 @@ from typing import List
 
 from .utils import decode_token
 from .service import UserService
-from .models import User
+from src.db.models import User
 
 from src.db.redis import token_in_blocklist
 from src.db.postgres import get_session

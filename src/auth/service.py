@@ -2,7 +2,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
 from sqlalchemy.exc import NoResultFound
 
-from .models import User
+from src.db.models import User
 from .schemas import UserCreateModel
 from .utils import generate_password_hash, verify_password
 

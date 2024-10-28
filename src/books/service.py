@@ -4,7 +4,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select, desc
 from sqlalchemy.exc import NoResultFound
 
-from .models import Book
+from src.db.models import Book
 from .schemas import BookCreateModel, BookUpdateModel
 
 
