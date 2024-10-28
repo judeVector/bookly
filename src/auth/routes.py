@@ -5,7 +5,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from .schemas import UserCreateModel, UserLoginModel, UserModel, UserBooksModel
 from .service import UserService
-from .utils import create_access_token, decode_token, verify_password
+from .utils import create_access_token, verify_password
 from .dependencies import (
     RefreshTokenBearer,
     AccessTokenBearer,
