@@ -1,4 +1,6 @@
 import uuid
+
+from typing import List
 from datetime import date, datetime
 from pydantic import BaseModel
 
@@ -16,6 +18,11 @@ class BookModel(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class BookDetailModel(BookModel):
+    reviews: List
+    tags: List
 
 
 class BookCreateModel(BaseModel):

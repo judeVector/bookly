@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlmodel import select, desc
 from sqlalchemy.exc import NoResultFound
 
