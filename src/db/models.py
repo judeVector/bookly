@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 
-from sqlmodel import Field, SQLModel, Column, Relationship, desc, String
+from sqlmodel import Field, SQLModel, Column, Relationship, desc
 from typing import Optional, List
 import sqlalchemy.dialects.postgresql as pg
 
@@ -38,9 +38,9 @@ class User(SQLModel, table=True):
 
 
 # Junction table for the many-to-many relationship between Book and Tag
-class BookTagLink(SQLModel, table=True):
-    book_id: uuid.UUID = Field(foreign_key="books.uid", primary_key=True)
-    tag_id: uuid.UUID = Field(foreign_key="tags.uid", primary_key=True)
+class BookTag(SQLModel, table=True):
+    book_id: uuid.UUID = Field(default=None, foreign_key="books.uid", primary_key=True)
+    tag_id: uuid.UUID = Field(default=None, foreign_key="tags.uid", primary_key=True)
 
 
 # Tags Model
@@ -50,11 +50,16 @@ class Tag(SQLModel, table=True):
     uid: uuid.UUID = Field(
         sa_column=Column(pg.UUID, nullable=False, primary_key=True, default=uuid.uuid4)
     )
-    # name: str = Field(max_length=10)
-    name: str = Field(sa_column=Column(String, unique=True), max_length=10)
-    books: List["Book"] = Relationship(back_populates="tags", link_model=BookTagLink)
+    name: str = Field(sa_column=Column(pg.VARCHAR, nullable=False))
     created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now))
-    updated_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now))
+    books: List["Book"] = Relationship(
+        back_populates="tags",
+        sa_relationship_kwargs={"lazy": "selectin"},
+        link_model=BookTag,
+    )
+
+    def __repr__(self):
+        return f"<Tag {self.name}>"
 
 
 # Book Model
@@ -81,7 +86,7 @@ class Book(SQLModel, table=True):
     tags: List["Tag"] = Relationship(
         back_populates="books",
         sa_relationship_kwargs={"lazy": "selectin", "order_by": desc("created_at")},
-        link_model=BookTagLink,
+        link_model=BookTag,
     )
 
     def __repr__(self):
