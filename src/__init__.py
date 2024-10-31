@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from .books.routes import book_router
 from .auth.routes import auth_router
 from .reviews.routes import review_router
+from .tags.routes import tag_router
 
 from src.db.postgres import init_db, close_db
 
@@ -27,3 +28,4 @@ app = FastAPI(
 app.include_router(book_router, prefix=f"/api/{version}/books", tags=["Books"])
 app.include_router(auth_router, prefix=f"/api/{version}/auth", tags=["Auth"])
 app.include_router(review_router, prefix=f"/api/{version}/reviews", tags=["Reviews"])
+app.include_router(tag_router, prefix=f"/api/{version}", tags=["Tags"])
