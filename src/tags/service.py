@@ -12,19 +12,10 @@ book_service = BookService()
 
 
 class TagService:
-    async def get_all_tags(self, session: AsyncSession):
+    async def get_tags(self, session: AsyncSession):
         statement = select(Tag).order_by(desc(Tag.created_at))
         result = await session.exec(statement)
         return result.all()
-
-    # async def create_tag(self, tag_data: TagCreateModel, session: AsyncSession):
-    #     tag_data_dict = tag_data.model_dump()
-    #     new_tag = Tag(**tag_data_dict)
-
-    #     session.add(new_tag)
-    #     await session.commit()
-    #     await session.refresh(new_tag)
-    #     return new_tag
 
     async def add_tags_to_book(
         self, book_uid: str, tag_data: TagAddModel, session: AsyncSession
@@ -67,3 +58,26 @@ class TagService:
         result = await session.exec(statement)
 
         return result.first()
+
+    async def update_tag(
+        self, tag_uid, tag_update_data: TagCreateModel, session: AsyncSession
+    ):
+
+        tag = await self.get_tag_by_uid(tag_uid, session)
+
+        if not tag:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Tag with Id {tag_uid} not found",
+            )
+
+        update_data_dict = tag_update_data.model_dump()
+
+        for k, v in update_data_dict.items():
+            setattr(tag, k, v)
+
+            await session.commit()
+
+            await session.refresh(tag)
+
+        return tag
