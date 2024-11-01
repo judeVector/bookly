@@ -57,5 +57,13 @@ class TagService:
             print(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Oops... Somwthing went wrong!",
+                detail="Oops... Something went wrong!",
             )
+
+    async def get_tag_by_uid(self, tag_uid: str, session: AsyncSession):
+
+        statement = select(Tag).where(Tag.uid == tag_uid)
+
+        result = await session.exec(statement)
+
+        return result.first()
