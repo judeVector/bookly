@@ -4,7 +4,10 @@ from contextlib import asynccontextmanager
 from .books.routes import book_router
 from .auth.routes import auth_router
 from .reviews.routes import review_router
-from .tags.routes import tag_router
+from .tags.routes import tags_router
+
+from .errors import register_all_errors
+from .middleware import register_middleware
 
 from src.db.postgres import init_db, close_db
 
@@ -25,7 +28,10 @@ app = FastAPI(
     description="**Bookly** is a book management application built with FastAPI (Python). It offers core CRUD functionalities for managing a book catalog, along with user authentication features. This project provides a fast, secure, and scalable way to handle book data and user accounts, making it a great example of modern web application development with Python",
 )
 
-app.include_router(book_router, prefix=f"/api/{version}/books", tags=["Books"])
+register_all_errors(app)
+register_middleware(app)
+
 app.include_router(auth_router, prefix=f"/api/{version}/auth", tags=["Auth"])
+app.include_router(book_router, prefix=f"/api/{version}/books", tags=["Books"])
 app.include_router(review_router, prefix=f"/api/{version}/reviews", tags=["Reviews"])
-app.include_router(tag_router, prefix=f"/api/{version}", tags=["Tags"])
+app.include_router(tags_router, prefix=f"/api/{version}", tags=["Tags"])
