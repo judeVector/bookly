@@ -8,6 +8,7 @@ from .schemas import BookCreateModel, BookModel, BookUpdateModel, BookDetailMode
 
 from src.db.postgres import get_session
 from src.auth.dependencies import AccessTokenBearer, Rolechecker
+from src.errors import BookNotFound
 
 
 book_router = APIRouter()
@@ -49,10 +50,7 @@ async def get_book(
     book = await book_service.get_book(book_uid, session)
 
     if not book:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Book with uid: {book_uid} not found",
-        )
+        raise BookNotFound()
 
     return book
 
@@ -88,10 +86,7 @@ async def update_book(
     updated_book = await book_service.update_book(book_uid, book_update_data, session)
 
     if not updated_book:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Book with uid: {book_uid} not found",
-        )
+        raise BookNotFound()
 
     return updated_book
 
@@ -107,9 +102,5 @@ async def delete_book(
     deleted = await book_service.delete_book(book_uid, session)
 
     if not deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Book with uid: {book_uid} not found",
-        )
-
+        raise BookNotFound()
     return None

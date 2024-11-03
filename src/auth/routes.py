@@ -15,6 +15,7 @@ from .dependencies import (
 
 from src.db.postgres import get_session
 from src.db.redis import add_jti_to_blocklist
+from src.errors import UserAlreadyExist, UserNotFound, InvalidToken
 
 
 auth_router = APIRouter()
@@ -47,10 +48,7 @@ async def create_user_account(
     user_exists = await user_service.user_exists(user_data.email, session)
 
     if user_exists:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"User with email {user_data.email} already exist",
-        )
+        raise UserAlreadyExist()
     new_user = await user_service.create_user(user_data, session)
     return new_user
 
@@ -84,10 +82,7 @@ async def login_user(
     # Verify user exists
     user = await user_service.get_user_by_email(email, session)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User with email {email} does not exist",
-        )
+        raise UserNotFound()
 
     # Verify password
     if not verify_password(password, user.password_hash):
@@ -140,9 +135,7 @@ async def get_new_access_token(token_details: dict = Depends(RefreshTokenBearer(
         new_access_token = create_access_token(user_data=token_details["user"])
         return JSONResponse(content={"access_token": new_access_token})
 
-    raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token"
-    )
+    raise InvalidToken()
 
 
 @auth_router.get("/me", response_model=UserBooksModel)

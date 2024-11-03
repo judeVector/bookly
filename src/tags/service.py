@@ -7,6 +7,7 @@ from .schemas import TagAddModel, TagCreateModel
 
 from src.db.models import Tag
 from src.books.service import BookService
+from src.errors import BookNotFound, TagNotFound, TagAlreadyExists
 
 book_service = BookService()
 
@@ -17,6 +18,25 @@ class TagService:
         result = await session.exec(statement)
         return result.all()
 
+    async def create_tag(self, tag_data: TagCreateModel, session: AsyncSession):
+        """Create a tag"""
+
+        statement = select(Tag).where(Tag.name == tag_data.name)
+
+        result = await session.exec(statement)
+
+        tag = result.first()
+
+        if tag:
+            raise TagAlreadyExists()
+        new_tag = Tag(name=tag_data.name)
+
+        session.add(new_tag)
+
+        await session.commit()
+
+        return new_tag
+
     async def add_tags_to_book(
         self, book_uid: str, tag_data: TagAddModel, session: AsyncSession
     ):
@@ -24,11 +44,7 @@ class TagService:
             book = await book_service.get_book(book_uid=book_uid, session=session)
 
             if not book:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Book with Id {book_uid} not found",
-                )
-
+                raise BookNotFound()
             for tag_item in tag_data.tags:
                 result = await session.exec(
                     select(Tag).where(Tag.name == tag_item.name)
@@ -66,10 +82,7 @@ class TagService:
         tag = await self.get_tag_by_uid(tag_uid, session)
 
         if not tag:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Tag with Id {tag_uid} not found",
-            )
+            raise TagNotFound()
 
         update_data_dict = tag_update_data.model_dump()
 
@@ -81,3 +94,15 @@ class TagService:
             await session.refresh(tag)
 
         return tag
+
+    async def delete_tag(self, tag_uid: str, session: AsyncSession):
+        """Delete a tag"""
+
+        tag = self.get_tag_by_uid(tag_uid, session)
+
+        if not tag:
+            raise TagNotFound()
+
+        await session.delete(tag)
+
+        await session.commit()

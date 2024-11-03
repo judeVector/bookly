@@ -10,6 +10,12 @@ from src.db.models import User
 
 from src.db.redis import token_in_blocklist
 from src.db.postgres import get_session
+from src.errors import (
+    InvalidToken,
+    RefreshTokenRequired,
+    AccessTokenRequired,
+    InsufficientPermission,
+)
 
 user_service = UserService()
 
@@ -56,22 +62,10 @@ class TokenBearer(HTTPBearer):
         token_data = decode_token(token)
 
         if await token_in_blocklist(token_data["jti"]):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={
-                    "error": "This token is invalid or has been revoked",
-                    "resolution": "Please get a new token",
-                },
-            )
+            raise InvalidToken()
 
         if token_data is None:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={
-                    "error": "Invalid token or token expired",
-                    "resolution": "Please get a new token",
-                },
-            )
+            raise InvalidToken()
         # Perform token-specific validation
         self.verify_token_data(token_data)
         return token_data
@@ -107,10 +101,7 @@ class AccessTokenBearer(TokenBearer):
             HTTPException: 403 if token is missing or is a refresh token
         """
         if not token_data or token_data.get("refresh"):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Please provide a valid access token.",
-            )
+            raise AccessTokenRequired()
 
 
 class RefreshTokenBearer(TokenBearer):
@@ -130,10 +121,7 @@ class RefreshTokenBearer(TokenBearer):
             HTTPException: 403 if token is missing or is not a refresh token
         """
         if not token_data or not token_data.get("refresh"):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Please provide a valid refresh token.",
-            )
+            raise RefreshTokenRequired()
 
 
 async def get_current_user(
@@ -156,7 +144,4 @@ class Rolechecker:
         if current_user.role in self.allowed_roles:
             return True
 
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not allowed to perform this action",
-        )
+        raise InsufficientPermission()
